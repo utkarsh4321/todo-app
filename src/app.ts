@@ -6,39 +6,60 @@ import {
   isOperationalError,
   returnError,
 } from "./utility/baseErrorHandler";
-import session from "express-session";
-import sqliteStore from "better-sqlite3-session-store";
-import Database from "better-sqlite3";
+import cookieParser from "cookie-parser";
+import { configureSession } from "./middleware/requestValidator";
+
+// import session from "express-session";
+// import sqliteStore from "better-sqlite3-session-store";
+// import Database from "better-sqlite3";
 
 const morganFormat = ":method :url :status :response-time ms";
 const baseApiPath = process.env.BASE_API_PATH;
-const SqliteStores = sqliteStore(session);
-const db = new Database("todo.db", { verbose: console.log });
-declare module "express-session" {
-  interface SessionData {
-    userId: number;
+// const SqliteStores = sqliteStore(session);
+// const db = new Database("todo.db", { verbose: console.log });
+// declare module "express-session" {
+//   interface SessionData {
+//     userId: number;
+//   }
+// }
+declare module "express" {
+  interface Request {
+    customSession?: {
+      addSession: (
+        id: number,
+        cookieAge: number
+      ) => Promise<string | undefined>;
+      destory: (sessionId: string) => void;
+      clearCookies: (sessionId: string) => void;
+      startInterval: () => void;
+      userId?: number;
+    };
   }
 }
 export const app = express();
 // define all middlewares
-app.use(
-  session({
-    secret: process.env.SESSION_SECRET!,
-    resave: false,
-    store: new SqliteStores({
-      client: db,
-      expired: {
-        clear: true,
-        intervalMs: 900000, //ms = 15min
-      },
-    }),
-    saveUninitialized: true,
-    cookie: {
-      maxAge: 1000 * 60 * 60 * 1,
-      httpOnly: true,
-    },
-  })
-);
+// express-session middleware
+// app.use(
+//   session({
+//     secret: process.env.SESSION_SECRET!,
+//     resave: false,
+//     store: new SqliteStores({
+//       client: db,
+//       expired: {
+//         clear: true,
+//         intervalMs: 900000, //ms = 15min
+//       },
+//     }),
+//     saveUninitialized: true,
+//     cookie: {
+//       maxAge: 1000 * 60 * 60 * 1,
+//       httpOnly: true,
+//     },
+//   })
+// );
+app.use(cookieParser(process.env.SESSION_SECRET));
+// custom session middleware
+app.use(configureSession);
 app.use(
   morgan(morganFormat, {
     stream: {

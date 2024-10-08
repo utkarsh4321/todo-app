@@ -62,7 +62,19 @@ export const loginUser = tAsyncHandler(async (req, res, next) => {
       storedUser.password
     );
     if (isPasswordCorrect) {
-      req.session.userId = storedUser.id;
+      // req.session.userId = storedUser.id;
+      const sessId = await req.customSession?.addSession(
+        storedUser.id,
+        1000 * 60
+      );
+      if (sessId) {
+        res.cookie("mysession", sessId, {
+          maxAge: 1000 * 60,
+          httpOnly: true,
+          signed: true,
+        });
+        if (req.customSession) req.customSession.userId = storedUser.id;
+      }
       return res.status(200).json({
         ...new api200ResponseHandler("login successfully", {
           userId: storedUser.id,
