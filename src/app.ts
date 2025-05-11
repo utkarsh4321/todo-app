@@ -25,15 +25,23 @@ const baseApiPath = process.env.BASE_API_PATH;
 declare module "express" {
   interface Request {
     customSession?: {
-      addSession: (
-        id: number,
-        cookieAge: number
-      ) => Promise<string | undefined>;
+      addSession: (id: number) => Promise<string | undefined>;
       destory: (sessionId: string) => void;
       clearCookies: (sessionId: string) => void;
       startInterval: () => void;
-      userId?: number;
+      userId?: number | null;
     };
+    // jwtService?: {
+    //   createToken: <T>(payload: T, expireTime: number) => string;
+    //   verifyToken: (token: string) => JwtPayload | string | null;
+    //   saveToken: (
+    //     token: string,
+    //     userId: string
+    //   ) => Promise<{ tokenId: number } | null>;
+    //   deleteToken: (sessionId: string) => void;
+    //   getToken: (tokenId: number) => Promise<string | null>;
+    // };
+    userId?: string | null;
   }
 }
 export const app = express();
@@ -91,6 +99,7 @@ app.use(express.static("public"));
 // })
 
 import "./masterRoute";
+import { JwtPayload } from "jsonwebtoken";
 
 // Error Handler middleware
 app.use(returnError);

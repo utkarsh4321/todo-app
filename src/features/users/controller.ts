@@ -4,17 +4,22 @@ import {
   api201ResponseHandler,
 } from "../../utility/apiResponseHandler";
 import { tAsyncHandler } from "../../utility/asyncHandler";
-import { api400errorhandler } from "../../utility/baseErrorHandler";
+import {
+  api400errorhandler,
+  api500errorhandler,
+} from "../../utility/baseErrorHandler";
 import { User, users } from "./model";
 import { db } from "../../db/db";
 import { comparePassword, hashPassword, insertUser } from "./userDbMethods";
+import { tokenService } from "../../services/auth/jwt/jwtService";
+import { v4 as uuid } from "uuid";
 
 export const registerUser = tAsyncHandler(async (req, res, next) => {
   const { email, password, name }: User = req.body;
   if (!email || !password || !name) {
     throw new api400errorhandler("name, email and password is required");
   }
-  const storedUser = await (
+  const storedUser = (
     await db
       .select()
       .from(users)
@@ -62,24 +67,74 @@ export const loginUser = tAsyncHandler(async (req, res, next) => {
       storedUser.password
     );
     if (isPasswordCorrect) {
-      // req.session.userId = storedUser.id;
-      const sessId = await req.customSession?.addSession(
-        storedUser.id,
-        1000 * 60
+      // |-----session creation logic here-----|
+      // const sessId = await req.customSession?.addSession(storedUser.id);
+      // if (sessId) {
+      //   res.cookie("mysession", sessId, {
+      //     // maxAge: 1000 * 60, // to set the max life of cookies
+      //     httpOnly: true,
+      //     signed: true,
+      //   });
+      //   if (req.customSession) req.customSession.userId = storedUser.id;
+      // }
+      // return res.status(200).json({
+      //   ...new api200ResponseHandler("login successfully", {
+      //     userId: storedUser.id,
+      //   }),
+      // });
+      // |-----JWT Token logic Here-----|
+      const accessTokenExpireTime =
+        (process.env.ACCESS_TOKEN_EXPIRE_TIME &&
+          +process.env.ACCESS_TOKEN_EXPIRE_TIME) ||
+        0;
+      const refreshTokenExpireTime =
+        (process.env.REFRESH_TOKEN_EXPIRE_TIME &&
+          +process.env.REFRESH_TOKEN_EXPIRE_TIME) ||
+        0;
+      const tokenId = uuid();
+      const accessToken = tokenService.createToken<{
+        userId: number;
+        email: string;
+      }>(
+        {
+          userId: storedUser.id,
+          email: storedUser.email,
+        },
+        accessTokenExpireTime
       );
-      if (sessId) {
-        res.cookie("mysession", sessId, {
-          maxAge: 1000 * 60,
+      const refreshToken = tokenService.createToken<{
+        userId: number;
+        tokenId: string;
+      }>(
+        {
+          userId: storedUser.id,
+          tokenId: tokenId,
+        },
+        refreshTokenExpireTime
+      );
+      const refreshTokenId = await tokenService.saveToken(
+        refreshToken,
+        storedUser.id,
+        tokenId
+      );
+      if (refreshTokenId?.tokenId) {
+        res.cookie("refresh_token", refreshToken, {
           httpOnly: true,
           signed: true,
+          maxAge: refreshTokenExpireTime,
+          path: "/user/refresh",
+          // sameSite:'strict'
         });
-        if (req.customSession) req.customSession.userId = storedUser.id;
+        return res.status(200).json({
+          ...new api200ResponseHandler("login successfully", {
+            token: accessToken,
+          }),
+        });
+      } else {
+        return res.status(500).json({
+          ...new api500errorhandler("Failed to save refresh token"),
+        });
       }
-      return res.status(200).json({
-        ...new api200ResponseHandler("login successfully", {
-          userId: storedUser.id,
-        }),
-      });
     } else {
       return res.status(401).json({
         message: "Invalid email or password.",

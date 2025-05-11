@@ -1,10 +1,11 @@
 // All features schema
 import { todos } from "../features/todos/model";
 import { users } from "../features/users/model";
-import { sessionsTable } from "../features/session/model";
+import { sessionsTable } from "../services/auth/session/model";
+import { tokenTable } from "../services/auth/jwt/model";
 
 // Export all schemas
-export { users, todos, sessionsTable };
+export { users, todos, sessionsTable, tokenTable };
 
 // export const users = sqliteTable('users', {
 //     id: integer('id',{mode:'number'}).primaryKey({autoIncrement:true}),
