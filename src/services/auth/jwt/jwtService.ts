@@ -1,7 +1,7 @@
 import jwt, { JwtPayload } from "jsonwebtoken";
 import { sql } from "drizzle-orm";
 import { db } from "../../../db/db";
-import { tokenTable } from "./model";
+import { TokenList, tokenTable } from "./model";
 
 class TokenService {
   constructor(private secretKey: string = process.env.SESSION_SECRET!) {
@@ -64,19 +64,33 @@ class TokenService {
     }
     return false;
   }
-  async getToken(tokenId: number): Promise<string | null> {
+  async getToken(tokenId: number): Promise<TokenList[] | null> {
     try {
       const tokenData = await db
         .select()
         .from(tokenTable)
         .where(sql`${tokenTable.id} = ${tokenId}`);
       if (tokenData.length > 0) {
-        return tokenData[0].refreshToken;
+        return tokenData;
       }
     } catch (err: any) {
       throw new Error(err);
     }
     return null;
   }
+  //  async getTokenByUserId(userId: number): Promise<string | null> {
+  //   try {
+  //     const tokenData = await db
+  //       .select()
+  //       .from(tokenTable)
+  //       .where(sql`${tokenTable.id} = ${tokenId}`);
+  //     if (tokenData.length > 0) {
+  //       return tokenData[0].refreshToken;
+  //     }
+  //   } catch (err: any) {
+  //     throw new Error(err);
+  //   }
+  //   return null;
+  // }
 }
 export const tokenService = new TokenService();

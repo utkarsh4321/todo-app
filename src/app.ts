@@ -7,7 +7,8 @@ import {
   returnError,
 } from "./utility/baseErrorHandler";
 import cookieParser from "cookie-parser";
-import { configureSession } from "./middleware/requestValidator";
+import { configureSession, jwtMiddleware } from "./middleware/requestValidator";
+import cors from "cors";
 
 // import session from "express-session";
 // import sqliteStore from "better-sqlite3-session-store";
@@ -41,7 +42,7 @@ declare module "express" {
     //   deleteToken: (sessionId: string) => void;
     //   getToken: (tokenId: number) => Promise<string | null>;
     // };
-    userId?: string | null;
+    userId?: number | null;
   }
 }
 export const app = express();
@@ -65,9 +66,13 @@ export const app = express();
 //     },
 //   })
 // );
+app.use(cors());
 app.use(cookieParser(process.env.SESSION_SECRET));
 // custom session middleware
-app.use(configureSession);
+// app.use(configureSession);
+// jwt middleware
+app.use(jwtMiddleware);
+
 app.use(
   morgan(morganFormat, {
     stream: {

@@ -15,7 +15,7 @@ export const getTodos = tAsyncHandler(async (req, res, next) => {
   const allTodos = await db
     .select()
     .from(todos)
-    .where(sql`${todos.userId} = ${req?.customSession?.userId}`);
+    .where(sql`${todos.userId} = ${req?.userId}`);
   if (allTodos)
     return res.status(200).json({
       ...new api200ResponseHandler(undefined, allTodos),
@@ -29,7 +29,7 @@ export const createTodo = tAsyncHandler(async (req, res, next) => {
   }
   const insertedTodo = await db
     .insert(todos)
-    .values({ todoText, userId: req?.customSession?.userId })
+    .values({ todoText, userId: req.userId })
     .returning();
   console.log(insertedTodo, "todo inserted");
   if (insertedTodo)
@@ -45,9 +45,7 @@ export const getTodoWithId = tAsyncHandler(async (req, res, next) => {
   const todo = await db
     .select()
     .from(todos)
-    .where(
-      sql`${todos.userId} = ${req?.customSession?.userId} and ${todos.id} = ${id}`
-    );
+    .where(sql`${todos.userId} = ${req.userId} and ${todos.id} = ${id}`);
   if (todo.length > 0)
     return res.status(200).json({
       ...new api200ResponseHandler(undefined, todo),
@@ -66,9 +64,7 @@ export const updateTodo = tAsyncHandler(async (req, res, nex) => {
   const updatedTodoData = await db
     .update(todos)
     .set({ todoStatus: todoStatus, todoText: todoText })
-    .where(
-      sql`${todos.id} = ${id} and ${todos.userId} = ${req?.customSession?.userId}`
-    )
+    .where(sql`${todos.id} = ${id} and ${todos.userId} = ${req.userId}`)
     .returning();
   if (updatedTodoData?.length > 0)
     return res.status(201).json({
@@ -84,9 +80,7 @@ export const deleteTodo = tAsyncHandler(async (req, res, next) => {
   const { id } = req.params;
   const todoData = await db
     .delete(todos)
-    .where(
-      sql`${todos.id} = ${id} and ${todos.userId} = ${req?.customSession?.userId}`
-    )
+    .where(sql`${todos.id} = ${id} and ${todos.userId} = ${req.userId}`)
     .returning({ todoId: todos.id });
   console.log(todoData);
   if (todoData.length > 0) {

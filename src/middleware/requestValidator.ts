@@ -1,13 +1,15 @@
 import type { NextFunction, Request, Response } from "express";
 import { SessionStore } from "../services/auth/session/session";
 import { tokenService } from "../services/auth/jwt/jwtService";
+import { JwtPayload } from "jsonwebtoken";
 
 export const requestValidator = (
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
-  if (req.customSession && req.customSession.userId) {
+  console.log(req.signedCookies?.refresh_token);
+  if (req?.userId) {
     return next();
   } else {
     return res.status(401).json({
@@ -15,6 +17,14 @@ export const requestValidator = (
       success: false,
     });
   }
+  // if (req.customSession && req.customSession.userId) {
+  //   return next();
+  // } else {
+  //   return res.status(401).json({
+  //     message: "unauthorized access",
+  //     success: false,
+  //   });
+  // }
 };
 
 export const configureSession = (
@@ -53,22 +63,26 @@ export const configureSession = (
 
 // middleware to handle the JWT token
 
-export const jwtValidator = (
+export const jwtMiddleware = (
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
   const token = req.headers.authorization;
   if (token) {
-    const decodedToken = tokenService.verifyToken(token);
-    if (decodedToken) {
-      console.log("my user have token");
+    const decodedToken = tokenService.verifyToken(token.split(" ")[1]);
+    if (decodedToken && typeof decodedToken !== "string" && decodedToken?.exp) {
+      const currenTime = Math.floor(Date.now() / 1000);
+      if (currenTime < decodedToken?.exp) {
+        req.userId = decodedToken.userId;
+      }
     }
     return next();
   } else {
-    return res.status(401).json({
-      message: "unauthorized access",
-      success: false,
-    });
+    next();
+    // return res.status(401).json({
+    //   message: "unauthorized access",
+    //   success: false,
+    // });
   }
 };
