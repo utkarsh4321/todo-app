@@ -27,6 +27,17 @@ export const createTodo = tAsyncHandler(async (req, res, next) => {
   if (!todoText) {
     throw new api400errorhandler("todo is required");
   }
+  const getTodo = (
+    await db
+      .select()
+      .from(todos)
+      .where(sql`${todos.todoText} = ${todoText.trim()}`)
+  ).at(0);
+  if (getTodo?.todoText) {
+    return res.status(200).json({
+      ...new api200ResponseHandler("todo already exists with the same task"),
+    });
+  }
   const insertedTodo = await db
     .insert(todos)
     .values({ todoText, userId: req.userId })

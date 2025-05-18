@@ -68,9 +68,9 @@ export const jwtMiddleware = (
   res: Response,
   next: NextFunction
 ) => {
-  const token = req.headers.authorization;
+  const token = req.signedCookies?.access_token;
   if (token) {
-    const decodedToken = tokenService.verifyToken(token.split(" ")[1]);
+    const decodedToken = tokenService.verifyToken(token);
     if (decodedToken && typeof decodedToken !== "string" && decodedToken?.exp) {
       const currenTime = Math.floor(Date.now() / 1000);
       if (currenTime < decodedToken?.exp) {

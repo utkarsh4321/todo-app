@@ -127,16 +127,24 @@ export const loginUser = tAsyncHandler(async (req, res, next) => {
         //   tokenId
         // );
         // if (refreshTokenId?.tokenId) {
+        res.cookie("access_token", accessToken, {
+          httpOnly: true,
+          signed: true,
+          maxAge: accessTokenExpireTime,
+          // path: "/api/v1/user/refresh",
+          // sameSite:'strict'
+        });
         res.cookie("refresh_token", refreshToken, {
           httpOnly: true,
           signed: true,
           maxAge: refreshTokenExpireTime,
-          path: "/api/v1/user/refresh",
+          path: "/api/v1/user",
           // sameSite:'strict'
         });
         return res.status(200).json({
           ...new api200ResponseHandler("login successfully", {
-            token: accessToken,
+            userId: storedUser.id,
+            email: storedUser.email,
           }),
         });
         // } else {
@@ -217,16 +225,24 @@ export const refreshToken = tAsyncHandler(async (req, res, next) => {
         // );
         // if (refreshTokenId?.tokenId) {
         // res.clearCookie("refresh_token");
+        res.cookie("access_token", accessToken, {
+          httpOnly: true,
+          signed: true,
+          maxAge: accessTokenExpireTime,
+          // path: "/api/v1/user/refresh",
+          // sameSite:'strict'
+        });
         res.cookie("refresh_token", refreshToken, {
           httpOnly: true,
           signed: true,
           maxAge: refreshTokenExpireTime,
-          path: "/api/v1/user/refresh",
+          path: "/api/v1/user",
           // sameSite:'strict'
         });
         return res.status(200).json({
           ...new api200ResponseHandler("login successfully", {
-            token: accessToken,
+            userId: storedUser.id,
+            email: storedUser.email,
           }),
         });
         // } else {
@@ -262,4 +278,20 @@ export const refreshToken = tAsyncHandler(async (req, res, next) => {
       success: false,
     });
   }
+});
+
+export const logout = tAsyncHandler(async (req, res, next) => {
+  if (req.signedCookies?.refresh_token && req.signedCookies?.access_token) {
+    res.clearCookie("refresh_token", {
+      path: "/api/v1/user",
+    });
+    res.clearCookie("access_token");
+    return res.status(200).json({
+      ...new api200ResponseHandler("logout successfully"),
+    });
+  }
+  return res.status(401).json({
+    message: "unauthorized access",
+    success: false,
+  });
 });
