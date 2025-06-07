@@ -66,7 +66,13 @@ export const app = express();
 //     },
 //   })
 // );
-app.use(cors());
+app.use(
+  cors({
+    credentials: true,
+    origin: "http://localhost:8080",
+    // methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  })
+);
 app.use(cookieParser(process.env.SESSION_SECRET));
 // custom session middleware
 // app.use(configureSession);

@@ -295,3 +295,24 @@ export const logout = tAsyncHandler(async (req, res, next) => {
     success: false,
   });
 });
+
+export const getUserInfo = tAsyncHandler(async (req, res, next) => {
+  if (req.userId) {
+    const storedUser = (
+      await db.select().from(users).where(eq(users.id, req.userId))
+    ).at(0);
+    if (storedUser) {
+      return res.status(200).json({
+        ...new api200ResponseHandler("user info", {
+          userId: storedUser.id,
+          email: storedUser.email,
+        }),
+      });
+    }
+  } else {
+    return res.status(401).json({
+      message: "unauthorized access",
+      success: false,
+    });
+  }
+});
