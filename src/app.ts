@@ -69,7 +69,12 @@ export const app = express();
 app.use(
   cors({
     credentials: true,
-    origin: "http://localhost:8080",
+    origin: (origin, callback) => {
+      // In this case, we're reflecting the request's origin back,
+      // which effectively allows all origins.
+      // 'origin' will be the origin of the requesting browser, e.g., 'http://localhost:3000'
+      callback(null, origin);
+    },
     // methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   })
 );

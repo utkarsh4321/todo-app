@@ -131,15 +131,16 @@ export const loginUser = tAsyncHandler(async (req, res, next) => {
           httpOnly: true,
           signed: true,
           maxAge: accessTokenExpireTime,
+          // sameSite: "strict",
+
           // path: "/api/v1/user/refresh",
-          // sameSite:'strict'
         });
         res.cookie("refresh_token", refreshToken, {
           httpOnly: true,
           signed: true,
           maxAge: refreshTokenExpireTime,
           path: "/api/v1/user",
-          // sameSite:'strict'
+          // sameSite: "strict",
         });
         return res.status(200).json({
           ...new api200ResponseHandler("login successfully", {
