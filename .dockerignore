@@ -1,0 +1,11 @@
+node_modules
+npm-debug.log
+drizzle
+dist
+.env
+*.db
+.git
+.gitignore
+.prettierrc
+.vscode
+.prettierignore
